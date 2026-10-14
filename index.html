@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>URL Safety Checker</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #050817;
+            --card: #0b1228;
+            --border: rgba(148, 163, 184, 0.14);
+            --text: #f5f7ff;
+            --muted: #9ba8c2;
+            --blue: #5b8cff;
+            --purple: #7c5cff;
+            --green: #39d98a;
+            --red: #ff657d;
+        }
+
+        body {
+            min-height: 100vh;
+            color: var(--text);
+            font-family: "Segoe UI", Arial, sans-serif;
+
+            background:
+                radial-gradient(
+                    circle at 10% 10%,
+                    rgba(91, 140, 255, 0.20),
+                    transparent 30%
+                ),
+                radial-gradient(
+                    circle at 90% 10%,
+                    rgba(124, 92, 255, 0.20),
+                    transparent 30%
+                ),
+                #050817;
+
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+
+            background:
+                linear-gradient(
+                    rgba(255,255,255,0.018) 1px,
+                    transparent 1px
+                ),
+                linear-gradient(
+                    90deg,
+                    rgba(255,255,255,0.018) 1px,
+                    transparent 1px
+                );
+
+            background-size: 38px 38px;
+            mask-image: linear-gradient(
+                to bottom,
+                rgba(0,0,0,.75),
+                transparent 90%
+            );
+        }
+
+        .container {
+            width: min(1000px, 92%);
+            margin: auto;
+            padding: 55px 0 80px;
+            position: relative;
+        }
+
+        /* HEADER */
+
+        .badge {
+            width: max-content;
+            margin: 0 auto 25px;
+            padding: 9px 16px;
+
+            border-radius: 999px;
+            border: 1px solid rgba(91,140,255,0.35);
+
+            background: rgba(91,140,255,0.08);
+
+            color: #cbd7ff;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+        }
+
+        .badge::before {
+            content: "●";
+            color: #8facff;
+            margin-right: 8px;
+        }
+
+        h1 {
+            max-width: 850px;
+            margin: auto;
+
+            text-align: center;
+
+            font-size: clamp(42px, 6vw, 70px);
+            line-height: 1.03;
+            letter-spacing: -3px;
+            font-weight: 850;
+
+            background: linear-gradient(
+                90deg,
+                white,
+                #d7e0ff,
+                #82e7ff
+            );
+
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .subtitle {
+            max-width: 760px;
+            margin: 18px auto 34px;
+
+            text-align: center;
+            color: var(--muted);
+
+            font-size: 16px;
+            line-height: 1.8;
+        }
+
+        /* SEARCH */
+
+        .search-box {
+            width: min(900px, 100%);
+            margin: auto;
+
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            padding: 10px;
+
+            border: 1px solid rgba(120,145,210,.35);
+            border-radius: 22px;
+
+            background:
+                linear-gradient(
+                    180deg,
+                    rgba(19,30,60,.96),
+                    rgba(8,14,31,.96)
+                );
+
+            box-shadow:
+                0 25px 70px rgba(0,0,0,.40);
+        }
+
+        .search-icon {
+            width: 50px;
+            height: 50px;
+            flex: 0 0 50px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 15px;
+
+            background: rgba(91,140,255,.10);
+            border: 1px solid rgba(91,140,255,.18);
+
+            color: #a8bfff;
+            font-size: 25px;
+        }
+
+        .search-box input {
+            flex: 1;
+            min-width: 0;
+            height: 54px;
+
+            padding: 0 17px;
+
+            border: 0;
+            outline: 0;
+            border-radius: 14px;
+
+            background: rgba(255,255,255,.06);
+
+            color: white;
+            font-size: 15px;
+        }
+
+        .search-box input::placeholder {
+            color: #73809a;
+        }
+
+        .search-box button {
+            width: 160px;
+            min-width: 160px;
+            height: 54px;
+
+            border: 0;
+            border-radius: 14px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--blue),
+                    var(--purple)
+                );
+
+            color: white;
+
+            font-size: 14px;
+            font-weight: 800;
+
+            cursor: pointer;
+
+            box-shadow:
+                0 15px 30px rgba(91,140,255,.25);
+
+            transition: 0.2s;
+        }
+
+        .search-box button:hover {
+            filter: brightness(1.08);
+            transform: translateY(-1px);
+        }
+
+        /* HISTORY */
+
+        .history-button {
+            display: block;
+            width: max-content;
+
+            margin: 16px auto 0;
+
+            padding: 10px 15px;
+
+            border: 1px solid rgba(148,163,184,.18);
+            border-radius: 10px;
+
+            background: rgba(255,255,255,.03);
+
+            color: #c8d2e8;
+            text-decoration: none;
+
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .history-button:hover {
+            color: white;
+            border-color: rgba(91,140,255,.45);
+            background: rgba(91,140,255,.08);
+        }
+
+        /* RESULT */
+
+        .result-box {
+            width: min(900px, 100%);
+
+            margin: 34px auto 0;
+            padding: 28px;
+
+            border-radius: 22px;
+
+            border: 1px solid var(--border);
+
+            background:
+                linear-gradient(
+                    180deg,
+                    rgba(13,20,42,.95),
+                    rgba(8,13,29,.95)
+                );
+
+            box-shadow:
+                0 28px 80px rgba(0,0,0,.35);
+        }
+
+        .result-box h2 {
+            margin-bottom: 18px;
+            font-size: 19px;
+        }
+
+        /* STATUS */
+
+        .result {
+            padding: 25px;
+
+            text-align: center;
+
+            border-radius: 18px;
+            border: 1px solid rgba(148,163,184,.15);
+        }
+
+        .safe-result {
+            background: rgba(57,217,138,.08);
+            border-color: rgba(57,217,138,.28);
+        }
+
+        .danger-result {
+            background: rgba(255,101,125,.08);
+            border-color: rgba(255,101,125,.28);
+        }
+
+        .status-title {
+            margin-bottom: 8px;
+
+            font-size: 28px;
+            font-weight: 800;
+        }
+
+        .safe-result .status-title {
+            color: var(--green);
+        }
+
+        .danger-result .status-title {
+            color: var(--red);
+        }
+
+        .status-description {
+            color: #b8c4db;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        /* FEATURE SECTION */
+
+        .features {
+            margin-top: 28px;
+        }
+
+        .features h3 {
+            margin-bottom: 14px;
+
+            color: #b9c8e7;
+
+            font-size: 12px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .feature {
+            min-height: 66px;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+
+            gap: 5px;
+
+            padding: 14px 16px;
+
+            border-radius: 13px;
+
+            border: 1px solid rgba(148,163,184,.10);
+
+            background: rgba(255,255,255,.025);
+
+            transition: 0.2s;
+        }
+
+        .feature:hover {
+            border-color: rgba(91,140,255,.25);
+            background: rgba(91,140,255,.05);
+        }
+
+        .feature-label {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .feature-value {
+            color: white;
+            font-size: 15px;
+            font-weight: 700;
+
+            word-break: break-word;
+        }
+
+        .domain-box {
+            grid-column: 1 / -1;
+        }
+
+        /* FOOTER */
+
+        .footer {
+            margin-top: 25px;
+
+            text-align: center;
+
+            color: #6d7992;
+
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 700px) {
+
+            .container {
+                padding-top: 35px;
+            }
+
+            h1 {
+                font-size: 40px;
+                letter-spacing: -1.7px;
+            }
+
+            .subtitle {
+                font-size: 14px;
+            }
+
+            .search-box {
+                flex-wrap: wrap;
+            }
+
+            .search-box input {
+                flex: 1;
+                width: calc(100% - 60px);
+            }
+
+            .search-box button {
+                width: 100%;
+                min-width: 100%;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .domain-box {
+                grid-column: auto;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="badge">
+        URL SAFETY CHECKER
+    </div>
+
+    <h1>
+        Check a URL before you trust it.
+    </h1>
+
+    <p class="subtitle">
+        Analyze a website URL using machine learning and URL-based
+        security features to identify potentially suspicious websites.
+    </p>
+
+
+    <!-- SEARCH -->
+
+    <form method="POST" class="search-box">
+
+        <div class="search-icon">
+            🔍
+        </div>
+
+        <input
+            type="text"
+            name="url"
+            placeholder="Enter website URL"
+            value="{{ request.form.get('url', '') }}"
+            required
+        >
+
+        <button type="submit">
+            Check URL
+        </button>
+
+    </form>
+
+
+    <!-- HISTORY -->
+
+    <a
+        href="{{ url_for('history') }}"
+        class="history-button"
+    >
+        View Check History
+    </a>
+
+
+    <!-- RESULT -->
+
+    {% if result %}
+
+    <div class="result-box">
+
+        <h2>
+            Analysis Result
+        </h2>
+
+
+        <!-- SAFE / PHISHING -->
+
+        <div class="result
+            {% if 'Safe' in result %}
+                safe-result
+            {% else %}
+                danger-result
+            {% endif %}
+        ">
+
+            {% if 'Safe' in result %}
+
+                <div class="status-title">
+                    ✅ Safe Website
+                </div>
+
+                <div class="status-description">
+                    The analyzed URL appears to have
+                    characteristics associated with a safe website.
+                </div>
+
+            {% else %}
+
+                <div class="status-title">
+                    ⚠️ Phishing Website
+                </div>
+
+                <div class="status-description">
+                    The analyzed URL contains characteristics
+                    that may indicate a potentially suspicious website.
+                </div>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- FEATURES -->
+
+        {% if features %}
+
+        <div class="features">
+
+            <h3>
+                URL Security Analysis
+            </h3>
+
+            <div class="feature-grid">
+
+
+                <!-- DOMAIN -->
+
+                <div class="feature domain-box">
+
+                    <div class="feature-label">
+                        🌐 Domain
+                    </div>
+
+                    <div class="feature-value">
+                        {{ features["Domain"] }}
+                    </div>
+
+                </div>
+
+
+                <!-- URL LENGTH -->
+
+                <div class="feature">
+
+                    <div class="feature-label">
+                        URL Length
+                    </div>
+
+                    <div class="feature-value">
+                        {{ features["URL Length"] }}
+                    </div>
+
+                </div>
+
+
+                <!-- DOMAIN LENGTH -->
+
+                <div class="feature">
+
+                    <div class="feature-label">
+                        Domain Length
+                    </div>
+
+                    <div class="feature-value">
+                        {{ features["Domain Length"] }}
+                    </div>
+
+                </div>
+
+
+                <!-- PATH LENGTH -->
+
+                <div class="feature">
+
+                    <div class="feature-label">
+                        Path Length
+                    </div>
+
+                    <div class="feature-value">
+                        {{ features["Path Length"] }}
+                    </div>
+
+                </div>
+
+
+                <!-- HTTPS -->
+
+                <div class="feature">
+
+                    <div class="feature-label">
+                        HTTPS Security
+                    </div>
+
+                    <div class="feature-value">
+
+                        {% if features["Uses HTTPS"] %}
+                            ✅ Enabled
+                        {% else %}
+                            ❌ Not Enabled
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <!-- DOTS -->
+
+                <div class="feature">
+
+                    <div class="feature-label">
+                        Number of Dots
+                    </div>
+
+                    <div class="feature-value">
+                        {{ features["Number of Dots"] }}
+                    </div>
+
+                </div>
+
+
+                <!-- HYPHENS -->
+
+                <div class="feature">
+
+                    <div class="feature-label">
+                        Number of Hyphens
+                    </div>
+
+                    <div class="feature-value">
+                        {{ features["Number of Hyphens"] }}
+                    </div>
+
+                </div>
+
+
+                <!-- DIGITS -->
+
+                <div class="feature">
+
+                    <div class="feature-label">
+                        Number of Digits
+                    </div>
+
+                    <div class="feature-value">
+                        {{ features["Number of Digits"] }}
+                    </div>
+
+                </div>
+
+
+                <!-- SLASHES -->
+
+                <div class="feature">
+
+                    <div class="feature-label">
+                        Number of Slashes
+                    </div>
+
+                    <div class="feature-value">
+                        {{ features["Number of Slashes"] }}
+                    </div>
+
+                </div>
+
+
+                <!-- QUESTION MARKS -->
+
+                <div class="feature">
+
+                    <div class="feature-label">
+                        Question Marks
+                    </div>
+
+                    <div class="feature-value">
+                        {{ features["Number of Question Marks"] }}
+                    </div>
+
+                </div>
+
+
+                <!-- EQUALS -->
+
+                <div class="feature">
+
+                    <div class="feature-label">
+                        Equal Signs
+                    </div>
+
+                    <div class="feature-value">
+                        {{ features["Number of Equals"] }}
+                    </div>
+
+                </div>
+
+
+                <!-- AMPERSANDS -->
+
+                <div class="feature">
+
+                    <div class="feature-label">
+                        Ampersands
+                    </div>
+
+                    <div class="feature-value">
+                        {{ features["Number of Ampersands"] }}
+                    </div>
+
+                </div>
+
+
+                <!-- SPECIAL CHARACTERS -->
+
+                <div class="feature">
+
+                    <div class="feature-label">
+                        Special Characters
+                    </div>
+
+                    <div class="feature-value">
+                        {{ features["Number of Special Characters"] }}
+                    </div>
+
+                </div>
+
+
+                <!-- SUSPICIOUS WORDS -->
+
+                <div class="feature">
+
+                    <div class="feature-label">
+                        Suspicious Words
+                    </div>
+
+                    <div class="feature-value">
+                        {{ features["Suspicious Words"] }}
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+    {% endif %}
+
+
+    <div class="footer">
+
+        URL analysis is based on extracted URL characteristics
+        and machine learning classification.
+
+    </div>
+
+</div>
+
+</body>
+
+</html>
